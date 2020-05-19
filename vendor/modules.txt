@@ -1,3 +1,3 @@
-# golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
+# golang.org/x/net v0.0.0-20200519113804-d87ec0cfa476
 golang.org/x/net/html
 golang.org/x/net/html/atom
