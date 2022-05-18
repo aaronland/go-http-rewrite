@@ -22,8 +22,6 @@ func baseRewriteHandler() http.Handler {
 
 func TestRewriteHTMLHandler(t *testing.T) {
 
-	base_handler := baseRewriteHandler()
-
 	var rewrite_func RewriteHTMLFunc
 
 	rewrite_func = func(n *html.Node, wr io.Writer) {
@@ -38,14 +36,16 @@ func TestRewriteHTMLHandler(t *testing.T) {
 
 	}
 
-	base_handler = RewriteHTMLHandler(base_handler, rewrite_func)
+	rewrite_handler := baseRewriteHandler()
+
+	rewrite_handler = RewriteHTMLHandler(rewrite_handler, rewrite_func)
 
 	s := &http.Server{
-		Addr:    ":8181",
-		Handler: base_handler,
+		Addr:    ":9434",
+		Handler: rewrite_handler,
 	}
 
-	defer s.Close()
+	// defer s.Close()
 
 	go func(s *http.Server) {
 
@@ -57,7 +57,7 @@ func TestRewriteHTMLHandler(t *testing.T) {
 
 	}(s)
 
-	rsp, err := http.Get("http://localhost:8181")
+	rsp, err := http.Get("http://localhost:9434")
 
 	if err != nil {
 		t.Fatalf("Failed to GET response, %v", err)

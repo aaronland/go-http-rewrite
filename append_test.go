@@ -26,25 +26,25 @@ func TestAppendHTMLHandler(t *testing.T) {
 		DataAttributes: map[string]string{"example": "example"},
 	}
 
-	base_handler := baseAppendHandler()
+	append_handler := baseAppendHandler()
 
-	base_handler = AppendResourcesHandler(base_handler, append_opts)
+	append_handler = AppendResourcesHandler(append_handler, append_opts)
 
 	s := &http.Server{
 		Addr:    ":8080",
-		Handler: base_handler,
+		Handler: append_handler,
 	}
 
-	defer s.Close()
+	// defer s.Close()
 
-	go func() {
+	go func(s *http.Server) {
 
 		err := s.ListenAndServe()
 
 		if err != nil {
-			log.Fatalf("Failed to start server WHY, %v", err)
+			log.Fatalf("Failed to start append server, %v", err)
 		}
-	}()
+	}(s)
 
 	rsp, err := http.Get("http://localhost:8080")
 
