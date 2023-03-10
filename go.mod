@@ -2,4 +2,4 @@ module github.com/aaronland/go-http-rewrite
 
 go 1.18
 
-require golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4
+require golang.org/x/net v0.8.0
