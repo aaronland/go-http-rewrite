@@ -3,22 +3,47 @@ package rewrite
 import (
 	"bufio"
 	"bytes"
-	"golang.org/x/net/html"
 	"io"
 	go_http "net/http"
 	go_httptest "net/http/httptest"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 // RewriteHTMLFunc is custom callback function for altering the HTML content of 'node'
 type RewriteHTMLFunc func(node *html.Node, writer io.Writer)
+
+// RewriteHTMLCondition is a custom callback function for determining whether a `RewriteHTMLFunc` should be applied to a request.
+type RewriteHTMLCondition func(req *go_http.Request) (bool, error)
 
 // RewriteHTMLHandler return a `net/http` middleware handle to alter the body of 'previous_handler'
 // using 'rewrite_func'. Content is only altered if and when the "Content-Type" header (returned by
 // 'previous_handler') is "text/html". If not the unaltered body is returned as-is.
 func RewriteHTMLHandler(previous_handler go_http.Handler, rewrite_func RewriteHTMLFunc) go_http.Handler {
 
+	rewrite_condition := func(req *go_http.Request) (bool, error) {
+		return true, nil
+	}
+
+	return RewriteHTMLHandlerWithCondition(previous_handler, rewrite_func, rewrite_condition)
+}
+
+func RewriteHTMLHandlerWithCondition(previous_handler go_http.Handler, rewrite_func RewriteHTMLFunc, rewrite_cond RewriteHTMLCondition) go_http.Handler {
+
 	fn := func(rsp go_http.ResponseWriter, req *go_http.Request) {
+
+		do_rewrite, err := rewrite_cond(req)
+
+		if err != nil {
+			go_http.Error(rsp, err.Error(), go_http.StatusInternalServerError)
+			return
+		}
+
+		if !do_rewrite {
+			previous_handler.ServeHTTP(rsp, req)
+			return
+		}
 
 		rec := go_httptest.NewRecorder()
 		previous_handler.ServeHTTP(rec, req)
