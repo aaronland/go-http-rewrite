@@ -35,8 +35,6 @@ func TestAppendHTMLHandler(t *testing.T) {
 		Handler: append_handler,
 	}
 
-	// defer s.Close()
-
 	go func(s *http.Server) {
 
 		err := s.ListenAndServe()
@@ -61,6 +59,55 @@ func TestAppendHTMLHandler(t *testing.T) {
 	}
 
 	expected := `<html><head><title>Test</title><script type="text/javascript" src="test.js"></script><link type="text/css" rel="stylesheet" href="test.css"/></head><body data-example="example">Hello world</body></html>`
+
+	if string(body) != expected {
+		t.Fatalf("Invalid output: '%s'", string(body))
+	}
+
+}
+
+func TestAppendHTMLHandlerWithJavaScriptAtEOF(t *testing.T) {
+
+	append_opts := &AppendResourcesOptions{
+		JavaScript:            []string{"test.js"},
+		Stylesheets:           []string{"test.css"},
+		DataAttributes:        map[string]string{"example": "example"},
+		AppendJavaScriptAtEOF: true,
+	}
+
+	append_handler := baseAppendHandler()
+
+	append_handler = AppendResourcesHandler(append_handler, append_opts)
+
+	s := &http.Server{
+		Addr:    ":8081",
+		Handler: append_handler,
+	}
+
+	go func(s *http.Server) {
+
+		err := s.ListenAndServe()
+
+		if err != nil {
+			log.Fatalf("Failed to start append server, %v", err)
+		}
+	}(s)
+
+	rsp, err := http.Get("http://localhost:8081")
+
+	if err != nil {
+		t.Fatalf("Failed to GET response, %v", err)
+	}
+
+	defer rsp.Body.Close()
+
+	body, err := io.ReadAll(rsp.Body)
+
+	if err != nil {
+		t.Fatalf("Failed to read response, %v", err)
+	}
+
+	expected := `<html><head><title>Test</title><link type="text/css" rel="stylesheet" href="test.css"/></head><body data-example="example">Hello world</body><script type="text/javascript" src="test.js"></script></html>`
 
 	if string(body) != expected {
 		t.Fatalf("Invalid output: '%s'", string(body))
